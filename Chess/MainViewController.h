@@ -22,6 +22,7 @@
 @property (strong, nonatomic) GameState* currentState;
 @property (strong, nonatomic) GameState* prevState;
 @property (strong, nonatomic) GameState* currentBestState;
+@property (strong, nonatomic) GameState* chosenBestState;
 @property (strong, nonatomic) Evaluation* evaluation;
 @property (strong, nonatomic) MoveGenerator* moveGenerator;
 @property bool computerIsBlack;

@@ -20,7 +20,8 @@
 
 @implementation MainViewController
 
-//nogen gange flytter den ikke værdifulde brikker, specielt når computer spiller som hvid
+//lav så hvis kongen er væk så returnerer den +/- uendelig alt efter hvis
+//lav rokade
 //spørg bjørn hvordan man "seeder" en iterativ deepening med den bedste fra sidste?
 //lave alle tests undtagen test 3 late om, husk at notere ved iterativ deepening, hvis bedste move ændrer sig undervejs
 //lad vær med at generere bedste state (transpositions table)
@@ -126,6 +127,9 @@
 				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX/*self.currentBestState.value*/ beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
 			}
 			i++;
+			if (!self.stopSearching) {
+				self.chosenBestState = self.currentBestState;
+			}
 //			[self.currentBestState printBoard];
 			//til tests
 //			NSLog(@"Max depth: %d", self.maxDepthReached);
@@ -153,9 +157,10 @@
 //			self.nodesCutoff = 0;
 			//
 		}
+		self.chosenBestState = self.currentBestState;
 	}
 	self.prevState = self.currentState;
-	self.currentState = self.currentBestState;
+	self.currentState = self.chosenBestState;
 	[self updateGui];
 //	[self.currentState printBoard];
 	if (self.evaluation.isEndGame < self.currentState.isEndGame) {
