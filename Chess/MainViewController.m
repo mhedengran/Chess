@@ -12,10 +12,6 @@
 
 @property (strong, nonatomic) UIButton* tempButton;
 
-@property int maxDepthReached;
-@property int nodesVisited;
-@property int nodesCutoff;
-
 @end
 
 @implementation MainViewController
@@ -30,7 +26,6 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 	self.currentState = [GameState init];
-//	[self.currentState printBoard];
 	self.evaluation = [Evaluation init];
 	self.moveGenerator = [MoveGenerator init];
 	for (UIButton *field in self.FieldButtons) {
@@ -51,15 +46,11 @@
 	} else {
 		[self.tempButton.layer setBorderWidth:0.0];
 		[self.tempButton.layer setBorderColor:[[UIColor clearColor] CGColor]];
-		//move from
 		int from = (int)self.tempButton.tag-1;
-		//to
 		int to = (int)((UIButton*)sender).tag-1;
 		self.tempButton = nil;
-		//do move in logic of piece
 		self.prevState = self.currentState;
 		self.currentState = [GameState initWithMoveFrom:from To:to and:self.prevState];
-//		[self.currentState printBoard];
 		[self updateGui];
 	}
 }
@@ -105,12 +96,6 @@
 }
 
 - (IBAction)donePressed:(id)sender {
-	//til tests
-	self.maxDepthReached = 0;
-	self.nodesVisited = 0;
-	self.nodesCutoff = 0;
-	//
-	
 	[self.view endEditing:YES];
 	self.stopSearching = NO;
 	if (self.maxTimeTextField.text != nil && ![self.maxTimeTextField.text isEqualToString:@""]) {
@@ -124,45 +109,27 @@
 			if (i == 1) {
 				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
 			} else {
-				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX/*self.currentBestState.value*/ beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
+				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
 			}
 			i++;
 			if (!self.stopSearching) {
 				self.chosenBestState = self.currentBestState;
 			}
-//			[self.currentBestState printBoard];
-			//til tests
-//			NSLog(@"Max depth: %d", self.maxDepthReached);
-//			NSLog(@"Nodes visited: %d", self.nodesVisited);
-//			NSLog(@"Nodes cutoff: %d", self.nodesCutoff);
-//			self.maxDepthReached = 0;
-//			self.nodesVisited = 0;
-//			self.nodesCutoff = 0;
-			//
 		}
 	} else if (self.maxPlyTextField.text != nil && ![self.maxPlyTextField.text isEqualToString:@""]) {
 		for (int i = 1; i <= [self.maxPlyTextField.text intValue]; i ++) {
 			if (i == 1) {
 				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
 			} else {
-				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX/*self.currentBestState.value*/ beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
+				[self alphaBetaWithState:self.currentState alpha:-INT16_MAX beta:INT16_MAX depth:i totalDepth:i computer:YES isComputerBlack:self.computerIsBlack];
 			}
-//			[self.currentBestState printBoard];
-			//til tests
-//			NSLog(@"Max depth: %d", self.maxDepthReached);
-//			NSLog(@"Nodes visited: %d", self.nodesVisited);
-//			NSLog(@"Nodes cutoff: %d", self.nodesCutoff);
-//			self.maxDepthReached = 0;
-//			self.nodesVisited = 0;
-//			self.nodesCutoff = 0;
-			//
+			self.chosenBestState = self.currentBestState;
 		}
-		self.chosenBestState = self.currentBestState;
 	}
 	self.prevState = self.currentState;
 	self.currentState = self.chosenBestState;
+	self.chosenBestState = nil;
 	[self updateGui];
-//	[self.currentState printBoard];
 	if (self.evaluation.isEndGame < self.currentState.isEndGame) {
 		self.evaluation.isEndGame = self.currentState.isEndGame;
 	}
@@ -243,26 +210,17 @@
 
 - (int)alphaBetaWithState:(GameState*)state alpha:(int)alpha beta:(int)beta depth:(int)currentDepth totalDepth:(int)depth computer:(bool)computer isComputerBlack:(bool)black {
 	
-	if (currentDepth == 0 || state.value < -15000 || state.value > 15000 || self.stopSearching) {
-		//test
-//		self.nodesVisited++;
-		//
+	if (currentDepth == 0 || state.value == -INT16_MAX || state.value == INT16_MAX || self.stopSearching) {
 		return state.value;
-	}
-	
-	if (self.maxDepthReached < currentDepth) {
-		self.maxDepthReached = currentDepth;
 	}
 	
 	int i = 0;
 	if (computer) {
-		NSArray* states = [self generateNewStatesFrom:state isComputerBlack:black isCurrentBlack:black];
+		NSMutableArray* states = [[NSMutableArray alloc] initWithArray:[self generateNewStatesFrom:state isComputerBlack:black isCurrentBlack:black]];
+		if (currentDepth == depth && self.chosenBestState != nil) {
+			[states insertObject:self.chosenBestState atIndex:0];
+		}
 		while ((beta > alpha) && (i < states.count)) {
-			//test
-//			if (!(beta > alpha)) {
-//				self.nodesCutoff++;
-//			}
-			//
 			int score = [self alphaBetaWithState:states[i] alpha:alpha beta:beta depth:currentDepth-1 totalDepth:depth computer:NO isComputerBlack:black];
 			if (score > alpha) {
 				alpha = score;
@@ -270,9 +228,6 @@
 					self.currentBestState = states[i];
 				}
 			}
-			//test
-//			self.nodesVisited++;
-			//
 			i++;
 		}
 		states = nil;
@@ -280,18 +235,10 @@
 	} else {
 		NSArray* states = [self generateNewStatesFrom:state isComputerBlack:black isCurrentBlack:!black];
 		while ((beta > alpha) && (i < states.count)) {
-			//test
-//			if (!(beta > alpha)) {
-//				self.nodesCutoff++;
-//			}
-			//
 			int score = [self alphaBetaWithState:states[i] alpha:alpha beta:beta depth:currentDepth-1 totalDepth:depth computer:YES isComputerBlack:black];
 			if (score < beta) {
 				beta = score;
 			}
-			//test
-//			self.nodesVisited++;
-			//
 			i++;
 		}
 		states = nil;

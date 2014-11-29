@@ -223,6 +223,8 @@
 	int numberOfPawns = 0;
 	int blackKingPos = -1;
 	int whiteKingPos = -1;
+	bool isBlackKingThere = NO;
+	bool isWhiteKingThere = NO;
 	for (int i = 0; i <= 7; i++) {
 		for (int j = 0; j <= 7; j++) {
 			int pos = i*16+j;
@@ -262,6 +264,7 @@
 					}
 					break;
 				case WHITE_KING:
+					isWhiteKingThere = YES;
 					if (self.isEndGame == 1) {
 						whiteValue += (KING + whiteKingSquareValuesEndGame[pos]);
 					} else if (self.isEndGame == 2) {
@@ -310,6 +313,7 @@
 					}
 					break;
 				case BLACK_KING:
+					isBlackKingThere = YES;
 					if (self.isEndGame == 1) {
 						blackValue += (KING + blackKingSquareValuesEndGame[pos]);
 					} else if (self.isEndGame == 2) {
@@ -367,9 +371,22 @@
 		}
 	}
 	if (black) {
-		return blackValue-whiteValue;
+		if (!isWhiteKingThere) {
+			return INT16_MAX;
+		} else if (!isBlackKingThere) {
+			return -INT16_MAX;
+		} else {
+			return blackValue-whiteValue;
+		}
 	} else {
-		return whiteValue-blackValue;
+		if (!isBlackKingThere) {
+			return INT16_MAX;
+		} else if (!isWhiteKingThere) {
+			return -INT16_MAX;
+		} else {
+			return whiteValue-blackValue;
+		}
+		
 	}
 }
 
